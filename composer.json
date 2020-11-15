@@ -10,10 +10,6 @@
         "craft-plugin",
         "import products"
     ],
-    "support": {
-        "docs": "???",
-        "issues": "???"
-    },
     "license": "MIT",
     "authors": [
         {
