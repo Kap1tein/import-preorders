@@ -1,0 +1,22 @@
+/**
+ * Import Products plugin for Craft CMS
+ *
+ * ImportProducts Field CSS
+ *
+ * @author    Davy Delbeke
+ * @copyright Copyright (c) 2020 Davy Delbeke
+ * @link      http://www.upclose.be
+ * @package   ImportProducts
+ * @since     1.0.0
+ */
+
+.alert {
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.alert-danger {
+    border: 1px solid #E12D39;
+    background-color: rgba(225,45,57,.75);
+    color: white;
+}

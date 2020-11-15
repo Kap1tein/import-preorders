@@ -1,0 +1,46 @@
+{
+    "name": "upclose/import-products",
+    "description": "Import CSV to create Products",
+    "type": "craft-plugin",
+    "version": "1.0.0",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "import products"
+    ],
+    "support": {
+        "docs": "???",
+        "issues": "???"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Davy Delbeke",
+            "homepage": "http://www.upclose.be"
+        }
+    ],
+    "require": {
+        "craftcms/cms": "^3.0.0"
+    },
+    "require-dev": {
+      "craftcms/cms": "^3.2.0",
+      "codeception/codeception": "^3.0",
+      "vlucas/phpdotenv": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+          "upclose\\importproducts\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Import Products",
+        "handle": "import-products",
+        "developer": "Davy Delbeke",
+        "developerUrl": "http://www.upclose.be",
+        "documentationUrl": "???",
+        "changelogUrl": "???",
+        "class": "upclose\\importproducts\\ImportProducts"
+    }
+}

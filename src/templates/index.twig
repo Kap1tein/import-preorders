@@ -1,0 +1,96 @@
+{# @var craft \craft\web\twig\variables\CraftVariable #}
+{#
+/**
+ * Import Products plugin for Craft CMS 3.x
+ *
+ * Import Products index.twig
+ *
+ * @author    Davy Delbeke
+ * @copyright Copyright (c) 2020 Davy Delbeke
+ * @link      http://www.upclose.be
+ * @package   ImportProducts
+ * @since     1.0.0
+ */
+#}
+
+{% extends "_layouts/cp" %}
+{% import "_includes/forms" as forms %}
+
+{% do view.registerAssetBundle("upclose\\importproducts\\assetbundles\\importproductscpsection\\ImportProductsCPSectionAsset") %}
+
+{% set title = "Import Products" %}
+
+{% set pluginCpUrl = url('import-products') %}
+
+{% set iconUrl = view.getAssetManager().getPublishedUrl('@upclose/importproducts/assetbundles/importproductscpsection/dist', true) ~ '/img/ImportProducts-icon.svg' %}
+{% set iconAdded = view.getAssetManager().getPublishedUrl('@upclose/importproducts/assetbundles/importproductscpsection/dist', true) ~ '/img/added.svg' %}
+{% set iconError = view.getAssetManager().getPublishedUrl('@upclose/importproducts/assetbundles/importproductscpsection/dist', true) ~ '/img/error.svg' %}
+
+{% set content %}
+    <h2>{{ "Import Preorder Producten CSV"|t('import-products') }}</h2>
+    <p class="textline">
+        Gebruik een CSV om in bulk alle preorder producten toe te voegen.<br/>
+        <strong>Deze CSV kan enkel gebruikt worden voor preorders.</strong></p>
+    <p>Het houdt geen rekening met verschillende pledges en add-ons.<br/>
+        Elke lijn wordt omgezet in een project met 1 product.
+    </p>
+    <hr/>
+    <form action="" method="POST" enctype="multipart/form-data">
+        <fieldset>
+            <div class="file-wrapper">
+                <input type="hidden" name="action" value="/import-products/product/create">
+                {{ csrfInput() }}
+                {{ redirectInput('admin/import-products') }}
+                <input type="file" name="CSVInput" />
+                <input type="submit" class="btn submit add icon float-right" value="{{ "Upload CSV"|t('import-products') }}" />
+            </div>
+        </fieldset>
+    </form>
+    <hr/>
+
+    {% if import is defined %}
+
+        {% if import.errors|length > 0 %}
+            <div class="alert alert-danger">
+                <ul>
+                    {% for error in import.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <h2>Products Imported</h2>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Added?</th>
+                <th>Title</th>
+                <th>SKU</th>
+                <th>Creator</th>
+                <th>Price</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for product in import.data %}
+                <tr>
+                    <td style="text-align: center">
+                        {% if product.Added == 'true' %}
+                            <img src="{{ iconAdded }}" width="15">
+                        {% else %}
+                            <img src="{{ iconError }}" width="15">
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ product.FullTitle }}</strong></td>
+                    <td>{{ product.OrderCode }}</td>
+                    <td>{{ product.Publisher }}</td>
+                    <td>{{ product.RetailPrice }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% endif %}
+
+{% endset %}
