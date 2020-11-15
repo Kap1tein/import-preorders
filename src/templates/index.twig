@@ -70,6 +70,7 @@
                 <th>SKU</th>
                 <th>Creator</th>
                 <th>Price</th>
+                <th>Errors</th>
             </tr>
             </thead>
             <tbody>
@@ -86,6 +87,9 @@
                     <td>{{ product.OrderCode }}</td>
                     <td>{{ product.Publisher }}</td>
                     <td>{{ product.RetailPrice }}</td>
+                    {% if product.Errors is defined %}
+                        <td>Error: {{ product.Errors }}</td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>

@@ -58,7 +58,7 @@ class ProductController extends Controller
                 $csvLine = fgetcsv($importFile, 1000, ';');
                 $product = array();
 
-                if(count($columns) == count($csvLine)) {
+                if( ($csvLine != null) && (count($columns) == count($csvLine))) {
                     for($i = 0; $i < count($columns); ++$i) {
                         //Remove \ufeff from string
                         $header = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $columns[$i]);
@@ -79,7 +79,7 @@ class ProductController extends Controller
 
             for($p = 0; $p < count($importData); ++$p) {
                 $importProduct = $importData[$p];
-                $requiredColumns = ['OrderCode', 'FullTitle', 'MainDescription', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount'];
+                $requiredColumns = ['FullTitle', 'MainDescription', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount'];
                 $arrError = [];
 
                 for($r = 0; $r < count($requiredColumns); ++$r) {

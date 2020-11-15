@@ -35,8 +35,6 @@
         "handle": "import-products",
         "developer": "Davy Delbeke",
         "developerUrl": "http://www.upclose.be",
-        "documentationUrl": "???",
-        "changelogUrl": "???",
         "class": "upclose\\importproducts\\ImportProducts"
     }
 }
