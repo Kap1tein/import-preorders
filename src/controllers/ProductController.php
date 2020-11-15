@@ -95,6 +95,7 @@ class ProductController extends Controller
                     //Create Product
                     $product = new Product();
                     $product->typeId = getGamesID();
+                    $product->enabled = false;
 
                     //Title -> Title
                     $product->title = $importProduct['FullTitle'];
