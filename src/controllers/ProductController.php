@@ -144,12 +144,14 @@ class ProductController extends Controller
                     //            $product->defaultVariant
 
                     if(count($arrError) == 0) {
-                        if (\Craft::$app->elements->saveElement($product, true)) {
+                        if (\Craft::$app->elements->saveElement($product)) {
                             $importProduct["Added"] = "true";
                             $importData[$p] = $importProduct;
                         } else {
+                            $error = $product->getErrors();
+
                             $importProduct["Added"] = "false";
-                            $importProduct["Errors"] = var_dump($product->getErrors());
+                            $importProduct["Errors"] = json_encode($error);
                             $importData[$p] = $importProduct;
                         }
                     } else {
