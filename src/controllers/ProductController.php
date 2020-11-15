@@ -107,7 +107,7 @@ class ProductController extends Controller
                     $product->projectDescription = $importProduct['MainDescription'];
 
                     //Crowdfunding Or Pre-Order -> Pre-Order
-                    $product->crowdfundingOrPreOrder = 'preOrderProduct';
+                    $product->crowdfundingOrPreOrder = 'preOrderProject';
 
                     //Estimated Delivery -> Shipping Date
                     $product->estimatedDelivery = \DateTime::createFromFormat('d/m/Y', $importProduct['ShippingDate']);
