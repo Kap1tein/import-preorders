@@ -52,11 +52,14 @@ class ProductController extends Controller
         if(in_array($_FILES['CSVInput']['type'],$mimes)){
 
             //Get Columns
-            $columns = fgetcsv($importFile, 10000, ";");
-            while(!feof($importFile))
+            $columns = fgetcsv($importFile, 50000, ";");
+            $columns = array_map("utf8_encode", $columns);
+
+            while($csvLine = fgetcsv ($importFile, 50000, ";"))
             {
-                $csvLine = fgetcsv($importFile, 1000, ';');
+                $csvLine = array_map("utf8_encode", $csvLine);
                 $product = array();
+                $headerStrings = array();
 
                 if( ($csvLine != null) && (count($columns) == count($csvLine))) {
                     for($i = 0; $i < count($columns); ++$i) {
@@ -69,6 +72,7 @@ class ProductController extends Controller
                         //Remove Space
                         $column = str_replace(' ', '', $headerString);
                         $product[$column] = $csvLine[$i];
+                        array_push($headerStrings, $headerString);
                     }
                 } else {
                     array_push($errors, "Er is een probleem, ergens in de file is er te weinig of te veel data ingegeven.");
@@ -180,6 +184,10 @@ class ProductController extends Controller
 
         Craft::$app->getUrlManager()->setRouteParams([
             'import' => $import
+        ]);
+
+        Craft::$app->getUrlManager()->setRouteParams([
+            'debug' => $headerStrings
         ]);
 
         return null;
