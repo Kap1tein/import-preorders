@@ -28,10 +28,10 @@ function checkifUnique($orderCode) {
     return is_null($variant);
 }
 
-function getGamesID() {
+function getCategoryID($handle) {
     $productTypes = new ProductTypes;
-    $games = $productTypes->getProductTypeByHandle('games');
-    return $games->id;
+    $category = $productTypes->getProductTypeByHandle($handle);
+    return $category->id;
 }
 
 class ProductController extends Controller
@@ -83,7 +83,7 @@ class ProductController extends Controller
 
             for($p = 0; $p < count($importData); ++$p) {
                 $importProduct = $importData[$p];
-                $requiredColumns = ['FullTitle', 'MainDescription', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount'];
+                $requiredColumns = ['FullTitle', 'MainDescription', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount', 'Category', 'ExpiryDate'];
                 $arrError = [];
 
                 for($r = 0; $r < count($requiredColumns); ++$r) {
@@ -98,7 +98,12 @@ class ProductController extends Controller
                 if(checkifUnique($importProduct['OrderCode'])) {
                     //Create Product
                     $product = new Product();
-                    $product->typeId = getGamesID();
+                    if($importProduct['Category'] == null || $importProduct['Category'] == '') {
+                        $product->typeId = getCategoryID('games');
+                    } else {
+                        $category = mb_convert_case($importProduct['Category'], MB_CASE_LOWER, "UTF-8");
+                        $product->typeId = getCategoryID($importProduct['Category']);
+                    }
                     $product->enabled = false;
 
                     //Title -> Title
@@ -116,8 +121,11 @@ class ProductController extends Controller
                     //Estimated Delivery -> Shipping Date
                     $product->estimatedDelivery = \DateTime::createFromFormat('d/m/Y', $importProduct['ShippingDate']);
 
-                    //Pledge Deadline -> ??
+                    //Pledge Deadline -> Deadline
                     $product->pledgeDeadline = \DateTime::createFromFormat('d/m/Y', $importProduct['Deadline']);
+
+                    //Expiry Date -> ExpiryDate
+                    $product->expiryDate = \DateTime::createFromFormat('d/m/Y', $importProduct['ExpiryDate']);
 
                     //Creator -> Publisher
                     $product->creator = $importProduct['Publisher'];
@@ -184,10 +192,6 @@ class ProductController extends Controller
 
         Craft::$app->getUrlManager()->setRouteParams([
             'import' => $import
-        ]);
-
-        Craft::$app->getUrlManager()->setRouteParams([
-            'debug' => $headerStrings
         ]);
 
         return null;
