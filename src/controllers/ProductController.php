@@ -31,7 +31,11 @@ function checkifUnique($orderCode) {
 function getCategoryID($handle) {
     $productTypes = new ProductTypes;
     $category = $productTypes->getProductTypeByHandle($handle);
-    return $category->id;
+    if(!is_null($category)) {
+        return $category->id;
+    } else {
+        return null;
+    }
 }
 
 class ProductController extends Controller
@@ -95,6 +99,7 @@ class ProductController extends Controller
                     }
                 }
 
+
                 if(checkifUnique($importProduct['OrderCode'])) {
                     //Create Product
                     $product = new Product();
@@ -102,7 +107,14 @@ class ProductController extends Controller
                         $product->typeId = getCategoryID('games');
                     } else {
                         $category = mb_convert_case($importProduct['Category'], MB_CASE_LOWER, "UTF-8");
-                        $product->typeId = getCategoryID($importProduct['Category']);
+                        $catID = getCategoryID($category);
+
+                        if(is_null($catID)) {
+                            $errorLine = 'Error at line ' . ($p + 1) . ': Category not found (must be comics, games or rpg)';
+                            array_push($arrError, $errorLine);
+                        } else {
+                            $product->typeId = $catID;
+                        }
                     }
                     $product->enabled = false;
 
@@ -151,11 +163,10 @@ class ProductController extends Controller
                     $price = $oldPrice - (floatval($oldPrice * floatval("0." . $discount)));
                     $variant->price = $price;
 
-                    //Set Variant as defaultVariant;
-                    $product->setVariants([$variant]);
-                    //            $product->defaultVariant
-
                     if(count($arrError) == 0) {
+                        //Set Variant as defaultVariant;
+                        $product->setVariants([$variant]);
+                        //            $product->defaultVariant
                         if (\Craft::$app->elements->saveElement($product)) {
                             $importProduct["Added"] = "true";
                             $importData[$p] = $importProduct;
