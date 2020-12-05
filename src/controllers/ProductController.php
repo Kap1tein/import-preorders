@@ -38,6 +38,13 @@ function getCategoryID($handle) {
     }
 }
 
+function validateDate($date, $format = 'Y-m-d')
+{
+    $d = \DateTime::createFromFormat($format, $date);
+    // The Y ( 4 digits year ) returns TRUE for any integer with any number of digits so changing the comparison from == to === fixes the issue.
+    return $d && $d->format($format) === $date;
+}
+
 class ProductController extends Controller
 {
     public function actionView($id)
@@ -87,7 +94,7 @@ class ProductController extends Controller
 
             for($p = 0; $p < count($importData); ++$p) {
                 $importProduct = $importData[$p];
-                $requiredColumns = ['FullTitle', 'MainDescription', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount', 'Category', 'ExpiryDate'];
+                $requiredColumns = ['FullTitle', 'MainDescription', 'Summary(Html)', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount', 'Category', 'ExpiryDate'];
                 $arrError = [];
 
                 for($r = 0; $r < count($requiredColumns); ++$r) {
@@ -122,7 +129,8 @@ class ProductController extends Controller
                     $product->title = $importProduct['FullTitle'];
 
                     //Short Summary -> Main Description Truncated to 100 characters...
-                    $product->projectShortSummary = truncate($importProduct['MainDescription'], 100);
+                    $summary = strip_tags($importProduct['Summary(Html)']);
+                    $product->projectShortSummary = truncate($summary, 100);
 
                     //Description -> Main Description
                     $product->projectDescription = $importProduct['MainDescription'];
@@ -131,13 +139,25 @@ class ProductController extends Controller
                     $product->crowdfundingOrPreOrder = 'preOrderProject';
 
                     //Estimated Delivery -> Shipping Date
-                    $product->estimatedDelivery = \DateTime::createFromFormat('d/m/Y', $importProduct['ShippingDate']);
+                    if(validateDate($importProduct['ShippingDate'], 'd/m/Y')) {
+                        $product->estimatedDelivery = \DateTime::createFromFormat('d/m/Y', $importProduct['ShippingDate']);
+                    } else if(validateDate($importProduct['ShippingDate'], 'd/m/y')) {
+                        $product->estimatedDelivery = \DateTime::createFromFormat('d/m/y', $importProduct['ShippingDate']);
+                    }
 
                     //Pledge Deadline -> Deadline
-                    $product->pledgeDeadline = \DateTime::createFromFormat('d/m/Y', $importProduct['Deadline']);
+                    if(validateDate($importProduct['Deadline'], 'd/m/Y')) {
+                        $product->pledgeDeadline = \DateTime::createFromFormat('d/m/Y', $importProduct['Deadline']);
+                    } else if(validateDate($importProduct['Deadline'], 'd/m/y')) {
+                        $product->pledgeDeadline = \DateTime::createFromFormat('d/m/y', $importProduct['Deadline']);
+                    }
 
                     //Expiry Date -> ExpiryDate
-                    $product->expiryDate = \DateTime::createFromFormat('d/m/Y', $importProduct['ExpiryDate']);
+                    if(validateDate($importProduct['ExpiryDate'], 'd/m/Y')) {
+                        $product->expiryDate = \DateTime::createFromFormat('d/m/Y', $importProduct['ExpiryDate']);
+                    } else if(validateDate($importProduct['ExpiryDate'], 'd/m/y')) {
+                        $product->expiryDate = \DateTime::createFromFormat('d/m/y', $importProduct['ExpiryDate']);
+                    }
 
                     //Creator -> Publisher
                     $product->creator = $importProduct['Publisher'];
