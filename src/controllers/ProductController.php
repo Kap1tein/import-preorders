@@ -57,9 +57,10 @@ class ProductController extends Controller
         $importFile = fopen($_FILES['CSVInput']['tmp_name'], 'r');
         $importData = [];
         $errors = [];
+        $isSafe = true;
 
         //Check if file is CSV
-        $mimes = array('application/vnd.ms-excel','text/plain','text/csv','text/tsv');
+        $mimes = array('text/csv','text/tsv');
         if(in_array($_FILES['CSVInput']['type'],$mimes)){
 
             //Get Columns
@@ -86,130 +87,133 @@ class ProductController extends Controller
                         array_push($headerStrings, $headerString);
                     }
                 } else {
+                    $isSafe = false;
                     array_push($errors, "Er is een probleem, ergens in de file is er te weinig of te veel data ingegeven.");
                 }
 
                 array_push($importData, $product);
             }
 
-            for($p = 0; $p < count($importData); ++$p) {
-                $importProduct = $importData[$p];
-                $requiredColumns = ['FullTitle', 'MainDescription', 'Summary(Html)', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount', 'Category', 'ExpiryDate'];
-                $arrError = [];
+            if($isSafe) {
+                for($p = 0; $p < count($importData); ++$p) {
+                    $importProduct = $importData[$p];
+                    $requiredColumns = ['FullTitle', 'MainDescription', 'Summary(Html)', 'ShippingDate', 'Deadline', 'Publisher', 'OrderCode', 'RetailPrice', 'Quantity', 'RetailDiscount', 'Category', 'ExpiryDate'];
+                    $arrError = [];
 
-                for($r = 0; $r < count($requiredColumns); ++$r) {
-                    $required = $requiredColumns[$r];
+                    for($r = 0; $r < count($requiredColumns); ++$r) {
+                        $required = $requiredColumns[$r];
 
-                    if($importProduct[$required] == '') {
-                        $errorLine = 'Error at line ' . ($p + 1) . ': "' . $required . '" is required!';
-                        array_push($arrError, $errorLine);
-                    }
-                }
-
-
-                if(checkifUnique($importProduct['OrderCode'])) {
-                    //Create Product
-                    $product = new Product();
-                    if($importProduct['Category'] == null || $importProduct['Category'] == '') {
-                        $product->typeId = getCategoryID('games');
-                    } else {
-                        $category = mb_convert_case($importProduct['Category'], MB_CASE_LOWER, "UTF-8");
-                        $catID = getCategoryID($category);
-
-                        if(is_null($catID)) {
-                            $errorLine = 'Error at line ' . ($p + 1) . ': Category not found (must be comics, games or rpg)';
+                        if($importProduct[$required] == '') {
+                            $errorLine = 'Error at line ' . ($p + 1) . ': "' . $required . '" is required!';
                             array_push($arrError, $errorLine);
-                        } else {
-                            $product->typeId = $catID;
                         }
                     }
-                    $product->enabled = false;
 
-                    //Title -> Title
-                    $product->title = $importProduct['FullTitle'];
 
-                    //Short Summary -> Main Description Truncated to 100 characters...
-                    $summary = strip_tags($importProduct['Summary(Html)']);
-                    $product->projectShortSummary = truncate($summary, 100);
-
-                    //Description -> Main Description
-                    $product->projectDescription = $importProduct['MainDescription'];
-
-                    //Crowdfunding Or Pre-Order -> Pre-Order
-                    $product->crowdfundingOrPreOrder = 'preOrderProject';
-
-                    //Estimated Delivery -> Shipping Date
-                    if(validateDate($importProduct['ShippingDate'], 'd/m/Y')) {
-                        $product->estimatedDelivery = \DateTime::createFromFormat('d/m/Y', $importProduct['ShippingDate']);
-                    } else if(validateDate($importProduct['ShippingDate'], 'd/m/y')) {
-                        $product->estimatedDelivery = \DateTime::createFromFormat('d/m/y', $importProduct['ShippingDate']);
-                    }
-
-                    //Pledge Deadline -> Deadline
-                    if(validateDate($importProduct['Deadline'], 'd/m/Y')) {
-                        $product->pledgeDeadline = \DateTime::createFromFormat('d/m/Y', $importProduct['Deadline']);
-                    } else if(validateDate($importProduct['Deadline'], 'd/m/y')) {
-                        $product->pledgeDeadline = \DateTime::createFromFormat('d/m/y', $importProduct['Deadline']);
-                    }
-
-                    //Expiry Date -> ExpiryDate
-                    if(validateDate($importProduct['ExpiryDate'], 'd/m/Y')) {
-                        $product->expiryDate = \DateTime::createFromFormat('d/m/Y', $importProduct['ExpiryDate']);
-                    } else if(validateDate($importProduct['ExpiryDate'], 'd/m/y')) {
-                        $product->expiryDate = \DateTime::createFromFormat('d/m/y', $importProduct['ExpiryDate']);
-                    }
-
-                    //Creator -> Publisher
-                    $product->creator = $importProduct['Publisher'];
-
-                    //Create Variant
-                    $variant = new Variant();
-
-                    //Variant SKU -> Order Code
-                    $variant->SKU = $importProduct['OrderCode'];
-
-                    //Title -> Title
-                    $variant->title = $importProduct['FullTitle'];
-
-                    //Old Price -> Retail Price
-                    $oldPrice = (float)str_replace(',', '.',$importProduct['RetailPrice']);
-                    $variant->oldPrice = $oldPrice;
-
-                    //Quantity
-                    $variant->stock = $importProduct['Quantity'];
-
-                    //Price -> Retail Price - Discount
-                    $discount = (int)str_replace(',', '.',$importProduct['RetailDiscount']);
-                    $price = $oldPrice - (floatval($oldPrice * floatval("0." . $discount)));
-                    $variant->price = $price;
-
-                    if(count($arrError) == 0) {
-                        //Set Variant as defaultVariant;
-                        $product->setVariants([$variant]);
-                        //            $product->defaultVariant
-                        if (\Craft::$app->elements->saveElement($product)) {
-                            $importProduct["Added"] = "true";
-                            $importData[$p] = $importProduct;
+                    if(checkifUnique($importProduct['OrderCode'])) {
+                        //Create Product
+                        $product = new Product();
+                        if($importProduct['Category'] == null || $importProduct['Category'] == '') {
+                            $product->typeId = getCategoryID('games');
                         } else {
-                            $error = $product->getErrors();
+                            $category = mb_convert_case($importProduct['Category'], MB_CASE_LOWER, "UTF-8");
+                            $catID = getCategoryID($category);
 
+                            if(is_null($catID)) {
+                                $errorLine = 'Error at line ' . ($p + 1) . ': Category not found (must be comics, games or rpg)';
+                                array_push($arrError, $errorLine);
+                            } else {
+                                $product->typeId = $catID;
+                            }
+                        }
+                        $product->enabled = false;
+
+                        //Title -> Title
+                        $product->title = $importProduct['FullTitle'];
+
+                        //Short Summary -> Main Description Truncated to 100 characters...
+                        $summary = strip_tags($importProduct['Summary(Html)']);
+                        $product->projectShortSummary = truncate($summary, 100);
+
+                        //Description -> Main Description
+                        $product->projectDescription = $importProduct['MainDescription'];
+
+                        //Crowdfunding Or Pre-Order -> Pre-Order
+                        $product->crowdfundingOrPreOrder = 'preOrderProject';
+
+                        //Estimated Delivery -> Shipping Date
+                        if(validateDate($importProduct['ShippingDate'], 'd/m/Y')) {
+                            $product->estimatedDelivery = \DateTime::createFromFormat('d/m/Y', $importProduct['ShippingDate']);
+                        } else if(validateDate($importProduct['ShippingDate'], 'd/m/y')) {
+                            $product->estimatedDelivery = \DateTime::createFromFormat('d/m/y', $importProduct['ShippingDate']);
+                        }
+
+                        //Pledge Deadline -> Deadline
+                        if(validateDate($importProduct['Deadline'], 'd/m/Y')) {
+                            $product->pledgeDeadline = \DateTime::createFromFormat('d/m/Y', $importProduct['Deadline']);
+                        } else if(validateDate($importProduct['Deadline'], 'd/m/y')) {
+                            $product->pledgeDeadline = \DateTime::createFromFormat('d/m/y', $importProduct['Deadline']);
+                        }
+
+                        //Expiry Date -> ExpiryDate
+                        if(validateDate($importProduct['ExpiryDate'], 'd/m/Y')) {
+                            $product->expiryDate = \DateTime::createFromFormat('d/m/Y', $importProduct['ExpiryDate']);
+                        } else if(validateDate($importProduct['ExpiryDate'], 'd/m/y')) {
+                            $product->expiryDate = \DateTime::createFromFormat('d/m/y', $importProduct['ExpiryDate']);
+                        }
+
+                        //Creator -> Publisher
+                        $product->creator = $importProduct['Publisher'];
+
+                        //Create Variant
+                        $variant = new Variant();
+
+                        //Variant SKU -> Order Code
+                        $variant->SKU = $importProduct['OrderCode'];
+
+                        //Title -> Title
+                        $variant->title = $importProduct['FullTitle'];
+
+                        //Old Price -> Retail Price
+                        $oldPrice = (float)str_replace(',', '.',$importProduct['RetailPrice']);
+                        $variant->oldPrice = $oldPrice;
+
+                        //Quantity
+                        $variant->stock = $importProduct['Quantity'];
+
+                        //Price -> Retail Price - Discount
+                        $discount = (int)str_replace(',', '.',$importProduct['RetailDiscount']);
+                        $price = $oldPrice - (floatval($oldPrice * floatval("0." . $discount)));
+                        $variant->price = $price;
+
+                        if(count($arrError) == 0) {
+                            //Set Variant as defaultVariant;
+                            $product->setVariants([$variant]);
+                            //            $product->defaultVariant
+                            if (\Craft::$app->elements->saveElement($product)) {
+                                $importProduct["Added"] = "true";
+                                $importData[$p] = $importProduct;
+                            } else {
+                                $error = $product->getErrors();
+
+                                $importProduct["Added"] = "false";
+                                $importProduct["Errors"] = json_encode($error);
+                                $importData[$p] = $importProduct;
+                            }
+                        } else {
                             $importProduct["Added"] = "false";
-                            $importProduct["Errors"] = json_encode($error);
                             $importData[$p] = $importProduct;
                         }
                     } else {
                         $importProduct["Added"] = "false";
                         $importData[$p] = $importProduct;
+
+                        $errorLine = 'Error at line ' . ($p + 1) . ': "' . $importProduct['OrderCode'] . '" already exists!';
+                        array_push($arrError, $errorLine);
                     }
-                } else {
-                    $importProduct["Added"] = "false";
-                    $importData[$p] = $importProduct;
 
-                    $errorLine = 'Error at line ' . ($p + 1) . ': "' . $importProduct['OrderCode'] . '" already exists!';
-                    array_push($arrError, $errorLine);
+                    $errors = array_merge($errors, $arrError);
                 }
-
-                $errors = array_merge($errors, $arrError);
             }
         } else {
             array_push($errors, "Alleen CSV Bestanden uploaden");
