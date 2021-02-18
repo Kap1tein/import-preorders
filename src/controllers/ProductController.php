@@ -216,7 +216,7 @@ class ProductController extends Controller
                 }
             }
         } else {
-            array_push($errors, "Alleen CSV Bestanden uploaden");
+            array_push($errors, "Filetype: " . $_FILES['CSVInput']['type'] . ". Alleen CSV Bestanden uploaden");
         }
 
         $import = array(
