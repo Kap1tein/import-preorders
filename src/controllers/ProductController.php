@@ -60,7 +60,7 @@ class ProductController extends Controller
         $isSafe = true;
 
         //Check if file is CSV
-        $mimes = array('text/csv','text/tsv');
+        $mimes = array('text/csv','text/tsv', 'application/csv' , 'text/x-csv' , 'application/vnd.ms-excel', 'text/plain');
         if(in_array($_FILES['CSVInput']['type'],$mimes)){
 
             //Get Columns
