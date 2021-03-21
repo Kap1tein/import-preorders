@@ -132,11 +132,10 @@ class ProductController extends Controller
                         $product->title = $importProduct['FullTitle'];
 
                         //Short Summary -> Main Description Truncated to 100 characters...
-                        $summary = strip_tags($importProduct['Summary(Html)']);
-                        $product->projectShortSummary = truncate($summary, 100);
+                        $product->projectShortSummary = $importProduct['MainDescription'];
 
                         //Description -> Main Description
-                        $product->projectDescription = $importProduct['MainDescription'];
+                        $product->projectDescription = $importProduct['Summary(Html)'];
 
                         //Crowdfunding Or Pre-Order -> Pre-Order
                         $product->crowdfundingOrPreOrder = 'preOrderProject';
